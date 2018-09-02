@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.kakao.kakaofriends.shop.model.dao.ShopDao">
+	 
+	<select id="shopList" resultType="com.kakao.kakaofriends.shop.model.vo.Product">
+		select * from PRODUCT order by PNO
+	</select>
+	
+	<select id="oneProduct" parameterType="Integer" resultType="com.kakao.kakaofriends.shop.model.vo.Product">
+		select * from PRODUCT where PNO = #{pno}
+	</select>
+	
+	<select id="detailImgList" parameterType="Integer" resultType="String">
+		select image from PRODUCT_DETAIL_IMG where PNO = #{pno} order by image
+	</select>
+	
+	<select id="findCart" parameterType="hashmap" resultType="hashmap">
+		select * from CART where pno = #{pno} and id = #{id}
+	</select>
+	
+	<update id="updateToCart" parameterType="hashmap">
+		update CART set quantity = (select quantity from CART where pno = #{pno} and id = #{id}) + ${quantity} where pno = #{pno} and id = #{id}
+	</update>
+	
+	<insert id="addToCart" parameterType="hashmap">
+		insert into CART values(
+			#{id}, #{pno}, #{quantity}
+		)
+	</insert>
+	
+	<select id="cartList" parameterType="String" resultType="hashmap">
+		select * from CART join PRODUCT using(PNO) where ID = #{id}
+	</select>
+	
+	<delete id="deleteFromCart" parameterType="hashmap">
+		delete from CART where pno = #{pno} and id = #{id}
+	</delete>
+	
+	<select id="purchaseBycart" parameterType="hashmap" resultType="hashmap">
+		select * from CART join PRODUCT using(PNO) where ID = #{id} and PNO in 
+		<foreach item="index" collection="pno" separator=", " open="(" close=")">
+			#{index}
+		</foreach>
+	</select>
+	
+	<insert id="paymentInf" parameterType="com.kakao.kakaofriends.shop.model.vo.Purchase">
+		<selectKey keyProperty="pid" resultType="_int" order="AFTER">
+			SELECT seq_pid.currval FROM DUAL
+		</selectKey>
+		insert into PURCHASE_INF values(
+			seq_pid.nextval, #{id}, #{name}, #{phone}, #{postcode},
+			#{address}, #{amount}, default 
+		)
+	</insert>
+	
+	<insert id="paymentList" parameterType="hashmap">
+		insert into PURCHASE_LIST values(
+			#{pid}, #{pno}, #{quantity}
+		)
+	</insert>
+	
+	<select id="paySuccessList" parameterType="Integer" resultType="hashmap">
+		select * from PURCHASE_LIST join PRODUCT using(PNO) where pid=#{pid}
+	</select>
+	
+	<select id="purchaseByDetail" parameterType="hashmap" resultType="hashmap">
+		select * from PRODUCT where PNO = #{pno}
+	</select>
+	
+	<select id="payList" parameterType="String" resultType="hashmap">
+		select * from PURCHASE_LIST join PURCHASE_INF using(pid) join PRODUCT using(pno) where ID = #{id} order by pdate desc
+	</select>
+</mapper>
